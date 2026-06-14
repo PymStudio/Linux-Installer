@@ -92,6 +92,16 @@ search_flatpak() {
     done
 }
 
+display_line() {
+    local i=$1 src=$2 name=$3 desc=$4
+    local color="$GREEN"
+    [ "$src" = "snap" ] && color="$YELLOW"
+    [ "$src" = "flatpak" ] && color="$CYAN"
+    local desc_short="${desc:0:40}"
+    [ ${#desc} -gt 40 ] && desc_short="${desc_short}..."
+    printf "  ${DIM}%3d${RESET}  ${color}%-8s${RESET} ${BOLD}%-25s${RESET} ${DIM}%s${RESET}\n" "$i" "$src" "$name" "$desc_short"
+}
+
 do_search() {
     local keyword
     echo -ne "  ${CYAN}搜索关键词:${RESET} "
@@ -102,23 +112,41 @@ do_search() {
     local count=0
 
     echo ""
-    echo -e "  ${BOLD}搜索: ${keyword}${RESET}"
-    echo -e "  ${DIM}正在搜索 apt ...${RESET}" &
-    search_apt "$keyword" >> "$tmpfile"
-    count=$(wc -l < "$tmpfile")
-    echo -e "\r  ${GREEN}✓ apt${RESET}       (${count} 条)         "
+    echo -e "  ${BOLD}搜索: ${keyword}${RESET}\n"
 
-    echo -e "  ${DIM}正在搜索 snap ...${RESET}"
-    search_snap "$keyword" >> "$tmpfile"
-    local new_count=$(wc -l < "$tmpfile")
-    echo -e "\r  ${GREEN}✓ snap${RESET}      (${new_count} 条)         "
+    echo -e "  ${DIM}────────────────────────────────────────────────────────────────────${RESET}"
+    printf "  ${DIM}%-3s  %-8s %-25s %s${RESET}\n" "#" "来源" "包名" "描述"
+    echo -e "  ${DIM}────────────────────────────────────────────────────────────────────${RESET}"
 
-    echo -e "  ${DIM}正在搜索 flatpak ...${RESET}"
-    search_flatpak "$keyword" >> "$tmpfile"
-    local total=$(wc -l < "$tmpfile")
-    echo -e "\r  ${GREEN}✓ flatpak${RESET}   (${total} 条)         "
+    echo -e "  ${DIM}▸ 搜索 apt ...${RESET}"
+    while IFS='|' read -r src name desc; do
+        ((count++))
+        echo "$src|$name|$desc" >> "$tmpfile"
+        display_line "$count" "$src" "$name" "$desc"
+    done < <(search_apt "$keyword")
+    echo -e "\r  ${GREEN}✓ apt${RESET}       ${DIM}(${count} 条)${RESET}              "
 
-    echo -e "\n  ${BOLD}共 ${total} 条结果${RESET}\n"
+    local snap_start=$count
+    echo -e "  ${DIM}▸ 搜索 snap ...${RESET}"
+    while IFS='|' read -r src name desc; do
+        ((count++))
+        echo "$src|$name|$desc" >> "$tmpfile"
+        display_line "$count" "$src" "$name" "$desc"
+    done < <(search_snap "$keyword")
+    echo -e "\r  ${GREEN}✓ snap${RESET}      ${DIM}($((count - snap_start)) 条)${RESET}              "
+
+    local fp_start=$count
+    echo -e "  ${DIM}▸ 搜索 flatpak ...${RESET}"
+    while IFS='|' read -r src name desc; do
+        ((count++))
+        echo "$src|$name|$desc" >> "$tmpfile"
+        display_line "$count" "$src" "$name" "$desc"
+    done < <(search_flatpak "$keyword")
+    echo -e "\r  ${GREEN}✓ flatpak${RESET}   ${DIM}($((count - fp_start)) 条)${RESET}              "
+
+    local total=$count
+    echo -e "\n  ${DIM}────────────────────────────────────────────────────────────────────${RESET}"
+    echo -e "  ${BOLD}共 ${total} 条结果${RESET}\n"
 
     if [ "$total" -eq 0 ]; then
         rm -f "$tmpfile"
@@ -135,6 +163,8 @@ do_search() {
         local end=$(( page * page_size ))
         [ "$end" -gt "$total" ] && end=$total
 
+        clear_screen
+        echo -e "  ${BOLD}搜索: ${keyword}${RESET}  ${DIM}(共 ${total} 条)${RESET}\n"
         echo -e "  ${DIM}────────────────────────────────────────────────────────────────────${RESET}"
         printf "  ${DIM}%-3s  %-8s %-25s %s${RESET}\n" "#" "来源" "包名" "描述"
         echo -e "  ${DIM}────────────────────────────────────────────────────────────────────${RESET}"
@@ -144,13 +174,7 @@ do_search() {
             ((i++))
             [ "$i" -lt "$start" ] && continue
             [ "$i" -gt "$end" ] && break
-            local color="$GREEN"
-            local icon="◆"
-            [ "$src" = "snap" ] && color="$YELLOW" && icon="●"
-            [ "$src" = "flatpak" ] && color="$CYAN" && icon="▲"
-            local desc_short="${desc:0:40}"
-            [ ${#desc} -gt 40 ] && desc_short="${desc_short}..."
-            printf "  ${DIM}%3d${RESET}  ${color}%-8s${RESET} ${BOLD}%-25s${RESET} ${DIM}%s${RESET}\n" "$i" "$src" "$name" "$desc_short"
+            display_line "$i" "$src" "$name" "$desc"
         done < "$tmpfile"
 
         echo -e "  ${DIM}────────────────────────────────────────────────────────────────────${RESET}"
@@ -167,13 +191,9 @@ do_search() {
         case "$input" in
             n|N)
                 [ "$current_page" -lt "$total_pages" ] && ((current_page++))
-                clear_screen
-                echo -e "  ${BOLD}搜索: ${keyword}${RESET}  ${DIM}(共 ${total} 条)${RESET}"
                 ;;
             p|P)
                 [ "$current_page" -gt 1 ] && ((current_page--))
-                clear_screen
-                echo -e "  ${BOLD}搜索: ${keyword}${RESET}  ${DIM}(共 ${total} 条)${RESET}"
                 ;;
             q|Q|"")
                 break
