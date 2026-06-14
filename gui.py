@@ -522,7 +522,6 @@ class MainWindow(QMainWindow):
         self.install_thread = InstallThread(cmd)
         self.install_thread.output.connect(lambda msg: self.log(log_box, msg))
         self.install_thread.start()
-        self.install_thread.wait()
 
 
 def main():
