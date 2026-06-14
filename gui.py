@@ -164,10 +164,13 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(f"检测到 {detect_distro()}")
 
     def closeEvent(self, event):
-        for t in [self.search_thread, self.speed_thread, self.install_thread]:
+        threads = [self.search_thread, self.speed_thread, self.install_thread]
+        for t in threads:
             if t and t.isRunning():
                 t.terminate()
-                t.wait(1000)
+        for t in threads:
+            if t and t.isRunning():
+                t.wait(500)
         event.accept()
 
     def init_ui(self):
@@ -532,6 +535,9 @@ class MainWindow(QMainWindow):
 
 
 def main():
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
     font = QFont()
@@ -539,7 +545,8 @@ def main():
     app.setFont(font)
     window = MainWindow()
     window.show()
-    sys.exit(app.exec())
+    ret = app.exec()
+    sys.exit(ret)
 
 
 if __name__ == "__main__":
