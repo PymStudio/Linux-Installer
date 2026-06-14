@@ -68,8 +68,10 @@ print_menu() {
 
 search_apt() {
     local keyword="$1"
-    apt-cache search "$keyword" 2>/dev/null | while IFS=' - ' read -r name desc; do
-        [ -n "$name" ] && [ -n "$desc" ] && echo "apt|$name|$desc"
+    apt-cache search "$keyword" 2>/dev/null | while read -r line; do
+        local name="${line%% - *}"
+        local desc="${line#* - }"
+        [ "$name" != "$line" ] && [ -n "$name" ] && echo "apt|$name|$desc"
     done
 }
 
@@ -77,7 +79,7 @@ search_snap() {
     local keyword="$1"
     snap find "$keyword" 2>/dev/null | tail -n +2 | while read -r line; do
         local name=$(echo "$line" | awk '{print $1}')
-        local desc=$(echo "$line" | cut -d' ' -f2-)
+        local desc=$(echo "$line" | cut -d' ' -f3-)
         [ -n "$name" ] && echo "snap|$name|$desc"
     done
 }
@@ -161,6 +163,7 @@ test_mirrors() {
             local best_int=${best_speed%.*}
             local best_frac=${best_speed#*.}
             best_frac=${best_frac:-0}
+            best_frac=$((10#${best_frac}))
             local best_score=$(( best_int * 100 + best_frac ))
 
             if [ "$total_score" -gt "$best_score" ]; then
