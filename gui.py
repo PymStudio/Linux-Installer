@@ -163,6 +163,13 @@ class MainWindow(QMainWindow):
         self.init_ui()
         self.statusBar().showMessage(f"检测到 {detect_distro()}")
 
+    def closeEvent(self, event):
+        for t in [self.search_thread, self.speed_thread, self.install_thread]:
+            if t and t.isRunning():
+                t.terminate()
+                t.wait(1000)
+        event.accept()
+
     def init_ui(self):
         central = QWidget()
         self.setCentralWidget(central)
