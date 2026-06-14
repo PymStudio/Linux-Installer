@@ -1,0 +1,3 @@
+#!/bin/bash
+cd /usr/share/linux-installer
+exec python3 gui.py "$@"

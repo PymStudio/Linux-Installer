@@ -20,6 +20,22 @@ Ubuntu/Debian 软件安装器，一键搜索、安装、换源。
 
 ## 使用方法
 
+### 安装 deb 包 (推荐)
+
+```bash
+# 下载 deb 包
+# 从 GitHub Releases 下载 linux-installer_0.2_all.deb
+
+# 安装
+sudo dpkg -i linux-installer_0.2_all.deb
+
+# 修复依赖（如果需要）
+sudo apt install -f
+
+# 运行
+linux-installer
+```
+
 ### Shell 版 (v0.1)
 
 ```bash
