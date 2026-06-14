@@ -348,7 +348,7 @@ one_click_setup() {
         [ -n "$apt_pkgs" ] && a="✓"
         [ -n "$snap_pkgs" ] && s="✓"
         [ -n "$flat_pkgs" ] && f="✓"
-        printf "  ${BOLD}%3s${RESET}  $(pad "$name" 14)  %-6s %-6s %-6s\n" "$num" "$a" "$s" "$f"
+        printf "  ${BOLD}%3s${RESET}  %s   %-6s %-6s %-6s\n" "$num" "$(pad "$name" 14)" "$a" "$s" "$f"
     done
     echo -e "  ${DIM}────────────────────────────────────────────────────────${RESET}"
 
