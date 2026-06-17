@@ -1,5 +1,58 @@
 #!/bin/bash
 
+if [ -n "$1" ] && [ -f "$1" ]; then
+    file="$1"
+    ext="${file##*.}"
+    ext=$(echo "$ext" | tr '[:upper:]' '[:lower:]')
+    echo "检测到文件: $(basename "$file")"
+    case "$ext" in
+        deb)
+            echo "安装 .deb 包..."
+            sudo dpkg -i "$file" 2>/dev/null || sudo apt install -f -y
+            ;;
+        rpm)
+            echo "安装 .rpm 包..."
+            if command -v alien &>/dev/null; then
+                tmp="/tmp/${file%.rpm}.deb"
+                sudo alien -d --to-deb "$file" -o "$tmp" 2>/dev/null
+                [ -f "$tmp" ] && sudo apt install -y "$tmp" && rm -f "$tmp"
+            else
+                sudo rpm -i "$file" 2>/dev/null
+            fi
+            ;;
+        appimage)
+            echo "运行 AppImage..."
+            dest="$HOME/.local/bin/$(basename "$file")"
+            mkdir -p "$(dirname "$dest")"
+            cp "$file" "$dest"
+            chmod +x "$dest"
+            echo "已复制到 $dest"
+            echo "运行: $dest"
+            "$dest" &
+            ;;
+        flatpak|flatpakref)
+            echo "安装 Flatpak 包..."
+            flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo 2>/dev/null
+            sudo flatpak install -y "$file"
+            ;;
+        exe)
+            echo "检测到 Windows 可执行文件"
+            echo "注意: 带反作弊的游戏无法运行"
+            if ! command -v wine &>/dev/null; then
+                echo "安装 Wine..."
+                sudo apt install -y wine
+            fi
+            wine "$file" &
+            ;;
+        *)
+            echo "不支持的格式: .$ext"
+            echo "支持: .deb .rpm .AppImage .flatpak .exe"
+            ;;
+    esac
+    echo "完成"
+    exit 0
+fi
+
 MIRRORS=(
     "清华源|https://mirrors.tuna.tsinghua.edu.cn/ubuntu/"
     "中科大|https://mirrors.ustc.edu.cn/ubuntu/"

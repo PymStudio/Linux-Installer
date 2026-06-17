@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Linux Installer
+Comment=Ubuntu/Debian 软件安装器
+Exec=/home/victor-pym/文档/Project/INSTALLER/installer.sh %f
+Icon=linux-installer
+Terminal=true
+Type=Application
+MimeType=application/vnd.debian.binary-package;application/x-rpm;application/x-appimage;application/x-flatpak;application/vnd.flatpak.ref;application/x-msdos-executable;
+Categories=System;Utility;
